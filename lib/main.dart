@@ -2,9 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'dart:async';
 import 'dart:math';
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
+
+class Items {
+  final String name;
+  final List<String> value;
+
+  const Items(this.name, this.value);
+}
+
+class Children {
+  final List<Items> items;
+
+  const Children(this.items);
+}
+
+class JsonData {
+  final int id;
+  final String name;
+  final Children children;
+
+  JsonData(this.id, this.name, this.children);
+}
 
 //Git Hub 3
-void main() => runApp(MyApp());
+void main() {
+  runApp(MyApp());
+  //loadCrossword();
+}
 
 enum TtsState { playing, stopped }
 
@@ -31,19 +57,48 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 65;
+  int _counter = 0;
+  String _text = "";
+
+  Children children;
+
+  Future<String> _loadAssets() async {
+    return await rootBundle.loadString('assets/data/test.json');
+  }
+
+  JsonData _parseJson(String jsonString) {
+    Map decoded = jsonDecode(jsonString);
+
+    List<Items> items = new List<Items>();
+    for (var item in decoded['children']) {
+      items.add(new Items(item['name'], item['value'].cast<String>()));
+    }
+    JsonData j =
+        new JsonData(decoded['id'], decoded['name'], new Children(items));
+
+    return j;
+  }
+
+  Future _parseAssets() async {
+    String jsonString = await _loadAssets();
+    JsonData jsonData = _parseJson(jsonString);
+    children = jsonData.children;
+  }
 
   void _incrementCounter() {
+    _parseAssets();
     setState(() {
       _counter++;
-      if (_counter > 90) {
-        _counter = 65;
+      if (_counter >= children.items[0].value.length) {
+        _counter = 0;
       }
       FlutterTts flutterTts = new FlutterTts();
+      //_text = String.fromCharCode(_counter);
+      _text = children.items[0].value[_counter];
 
       TtsState ttsState = TtsState.stopped;
       Future _speak() async {
-        var result = await flutterTts.speak(String.fromCharCode(_counter));
+        var result = await flutterTts.speak(_text);
         if (result == 1) setState(() => ttsState = TtsState.playing);
       }
 
@@ -61,9 +116,9 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(String.fromCharCode(_counter),
+            Text(_text,
                 //style: Theme.of(context).textTheme.display4,
-                style: TextStyle(fontSize: 500).apply(
+                style: TextStyle(fontSize: 100).apply(
                     color: Color.fromRGBO(
                         1 * (new Random().nextInt(255)),
                         10 * (new Random().nextInt(255)),

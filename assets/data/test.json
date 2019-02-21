@@ -1,0 +1,14 @@
+{
+  "id": 1,
+  "name": "Data",
+  "children": [
+    {
+      "name": "Alphabets",
+      "value": ["A", "B", "C", "D"]
+    },
+    {
+      "name": "Numbers",
+      "value": ["1", "2", "3", "4"]
+    }
+  ]
+}
